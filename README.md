@@ -1,170 +1,306 @@
 # Ali Raza's Assistant
 
-A production-style full-stack chatbot built from basic_chatbot.ipynb.
+A full-stack, ChatGPT-style AI assistant built from `basic_chatbot.ipynb` and
+expanded into a production-ready web application.
 
-- React and TypeScript frontend
-- FastAPI and LangGraph backend
-- Groq-hosted openai/gpt-oss-120b
-- PostgreSQL with Tortoise ORM
-- Aerich database migrations
-- Docker Compose for frontend, API, migrations, and PostgreSQL
-- Token-by-token Server-Sent Events streaming
+## Live application
 
-Read [BUILD_GUIDE.md](BUILD_GUIDE.md) for the architecture and development
-workflow.
+- Frontend: [ali-raza-assistant-web.vercel.app](https://ali-raza-assistant-web.vercel.app)
+- Backend health: [Railway API health](https://my-assistant-gpt-clone-production.up.railway.app/api/health)
+- Interactive API docs: [Railway Swagger UI](https://my-assistant-gpt-clone-production.up.railway.app/docs)
+- Source: [GitHub repository](https://github.com/AliRaza-Dev678/My-Assistant-Gpt-Clone-)
 
-For production deployment with Vercel, Railway, and managed PostgreSQL, read
-[DEPLOYMENT.md](DEPLOYMENT.md).
+> The public deployment does not have user authentication yet. Do not enter
+> private or sensitive information, because conversations are not isolated by
+> user account.
 
-## Features
+## What it includes
 
+- ChatGPT-inspired responsive interface
+- Token-by-token responses with Server-Sent Events (SSE)
 - Persistent conversations and messages
-- Create, search, rename, and delete conversations
-- Stop generation, regenerate the latest answer, and copy responses
+- Create, search, rename, and delete chats
+- Stop generation and regenerate the latest response
 - Markdown, tables, links, and fenced code blocks
-- Dark, light, and system themes
-- Responsive desktop and mobile interface
-- Database health reporting
-- Backend lifecycle tests and frontend build tests
+- Light, dark, and system themes
+- PostgreSQL persistence through Tortoise ORM
+- Aerich database migrations
+- FastAPI health checks and OpenAPI documentation
+- Docker Compose development environment
+- Automated Vercel and Railway deployments from GitHub
+
+## Technology stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS |
+| Backend | FastAPI, Python 3.12, LangChain, LangGraph |
+| AI provider | Groq |
+| Model | `openai/gpt-oss-120b` |
+| Database | PostgreSQL 18 |
+| ORM and migrations | Tortoise ORM and Aerich |
+| Local containers | Docker Compose |
+| Production hosting | Vercel, Railway, and Railway PostgreSQL |
+
+## Production architecture
+
+```text
+Browser
+  |
+  v
+Vercel (Next.js frontend)
+  |
+  | HTTPS + SSE
+  v
+Railway (FastAPI backend)
+  |                 \
+  v                  v
+Railway PostgreSQL   Groq API
+```
+
+Vercel serves the frontend. The frontend calls the Railway API, which stores
+conversation data in PostgreSQL and streams model output from Groq.
 
 ## Project structure
 
-    ali-raza-assistant/
-    ├── backend/
-    │   ├── app/
-    │   │   ├── api/
-    │   │   ├── core/
-    │   │   ├── models/
-    │   │   ├── repositories/
-    │   │   └── services/
-    │   ├── migrations/
-    │   ├── tests/
-    │   ├── Dockerfile
-    │   └── pyproject.toml
-    ├── frontend/
-    │   ├── app/
-    │   ├── Dockerfile
-    │   └── package.json
-    ├── compose.yaml
-    └── .env.example
+```text
+ali-raza-assistant/
+|-- backend/
+|   |-- app/
+|   |   |-- api/           # FastAPI routes
+|   |   |-- core/          # Settings and database lifecycle
+|   |   |-- models/        # Tortoise entities and API schemas
+|   |   |-- repositories/  # Conversation persistence
+|   |   `-- services/      # LangGraph and Groq assistant
+|   |-- migrations/        # Aerich migrations
+|   |-- tests/
+|   |-- Dockerfile
+|   |-- railway.json
+|   `-- pyproject.toml
+|-- frontend/
+|   |-- app/
+|   |-- public/
+|   |-- tests/
+|   |-- Dockerfile
+|   |-- package.json
+|   `-- vercel.json
+|-- compose.yaml
+|-- .env.example
+|-- BUILD_GUIDE.md
+`-- DEPLOYMENT.md
+```
 
-## Recommended setup: Docker
+## Quick start with Docker
 
-Install Docker Desktop, then create the root environment file:
+### Prerequisites
 
-    Copy-Item .env.example .env
-    notepad .env
+- Docker Desktop
+- A [Groq API key](https://console.groq.com/keys)
 
-Replace your_groq_api_key_here and change POSTGRES_PASSWORD when the stack is
-used outside local development.
+Create the local environment file:
 
-If ports 5432, 8000, or 3000 are already in use, change POSTGRES_PORT,
-BACKEND_PORT, FRONTEND_PORT, and NEXT_PUBLIC_API_URL in .env before building.
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
 
-Build and start everything:
+Replace the placeholder value:
 
-    docker compose up --build
+```dotenv
+GROQ_API_KEY=your_real_groq_api_key
+```
 
-Docker Compose starts PostgreSQL, waits for it to become healthy, applies
-Aerich migrations, starts the API, and then starts the frontend.
+If PostgreSQL port `5432` is already occupied, use another host port without
+changing the container's internal database port:
+
+```dotenv
+POSTGRES_PORT=5433
+```
+
+Build and start the complete stack:
+
+```powershell
+docker compose up --build
+```
 
 Open:
 
-- Frontend: http://localhost:3000
-- API health: http://localhost:8000/api/health
-- API documentation: http://localhost:8000/docs
+- Frontend: <http://localhost:3000>
+- Backend health: <http://localhost:8000/api/health>
+- API documentation: <http://localhost:8000/docs>
+
+Docker Compose starts PostgreSQL, waits for it to become healthy, applies
+Aerich migrations, starts FastAPI, and then starts the frontend.
 
 Stop the stack:
 
-    docker compose down
+```powershell
+docker compose down
+```
 
-Stop it and delete the PostgreSQL volume:
+To also permanently delete the local PostgreSQL volume:
 
-    docker compose down -v
+```powershell
+docker compose down -v
+```
 
-The second command permanently removes local container database data.
+## Local development
 
-## Local development with Docker PostgreSQL
+### 1. Start PostgreSQL
 
-Start only PostgreSQL:
+```powershell
+docker compose up -d db
+```
 
-    docker compose up -d db
+### 2. Start the backend
 
-Create and activate the backend environment:
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+Copy-Item ..\.env.example .env
+```
 
-    cd backend
-    python -m venv venv
-    .\venv\Scripts\Activate.ps1
-    python -m pip install -e ".[dev]"
-    Copy-Item ..\.env.example .env
+Add your Groq API key to `backend/.env`, then run the migrations and API:
 
-Add the Groq key to backend/.env, then apply migrations:
+```powershell
+python -m aerich upgrade
+python -m uvicorn app.main:app --reload --port 8000
+```
 
-    python -m aerich upgrade
+Use `python -m uvicorn` instead of the bare `uvicorn` launcher if a virtual
+environment was moved from another directory.
 
-Start the API:
+### 3. Start the frontend
 
-    python -m uvicorn app.main:app --reload --port 8000
+Open a second terminal:
 
-In a second terminal:
+```powershell
+cd frontend
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
 
-    cd frontend
-    Copy-Item .env.example .env.local
-    npm install
-    npm run dev
+The frontend expects the API at `http://localhost:8000/api` by default.
+
+## Environment variables
+
+| Variable | Used by | Purpose |
+| --- | --- | --- |
+| `GROQ_API_KEY` | Backend | Groq authentication; never expose it in the frontend |
+| `GROQ_MODEL` | Backend | Model identifier; defaults to `openai/gpt-oss-120b` |
+| `TEMPERATURE` | Backend | Model sampling temperature |
+| `DATABASE_URL` | Backend | PostgreSQL connection string |
+| `GENERATE_SCHEMAS` | Backend | Local-only schema generation switch; production uses migrations |
+| `CORS_ORIGINS` | Backend | Comma-separated allowed frontend origins |
+| `NEXT_PUBLIC_API_URL` | Frontend | Public backend base URL ending in `/api` |
+| `POSTGRES_*` | Docker Compose | Local PostgreSQL container settings |
+| `BACKEND_PORT` | Docker Compose | Backend host port |
+| `FRONTEND_PORT` | Docker Compose | Frontend host port |
+
+Never commit `.env`, `.env.local`, database credentials, or API keys.
 
 ## Aerich migration workflow
 
-Tortoise models live in backend/app/models/entities.py. After changing them:
+Tortoise models are defined in `backend/app/models/entities.py`. After changing
+the database models, run:
 
-    cd backend
-    .\venv\Scripts\Activate.ps1
-    python -m aerich migrate --name describe_your_change
-    python -m aerich upgrade
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+python -m aerich migrate --name describe_your_change
+python -m aerich upgrade
+```
 
-Inspect migration state:
+Useful commands:
 
-    python -m aerich history
-    python -m aerich heads
+```powershell
+python -m aerich history
+python -m aerich heads
+python -m aerich downgrade
+```
 
-Roll back the latest migration:
+Review generated migrations before applying them. An incorrect rename or drop
+decision can cause data loss.
 
-    python -m aerich downgrade
+## Main API routes
 
-Review generated migration files before applying them, especially when Aerich
-asks whether a field was renamed. Choosing a drop instead of a rename can lose
-data.
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health` | Service, model, and database status |
+| `GET` | `/api/conversations` | List conversations |
+| `POST` | `/api/conversations` | Create a conversation |
+| `GET` | `/api/conversations/{id}` | Get a conversation and its messages |
+| `PATCH` | `/api/conversations/{id}` | Rename a conversation |
+| `DELETE` | `/api/conversations/{id}` | Delete a conversation |
+| `POST` | `/api/conversations/{id}/messages` | Send a message and stream the response |
+| `POST` | `/api/conversations/{id}/regenerate` | Regenerate the latest assistant response |
 
 ## Verification
 
-Backend:
+Backend tests:
 
-    cd backend
-    .\venv\Scripts\python.exe -m pytest --basetemp .test-tmp
+```powershell
+cd backend
+.\venv\Scripts\python.exe -m pytest --basetemp .test-tmp
+```
 
-Frontend:
+Frontend checks:
 
-    cd frontend
-    npm run lint
-    npm run build
-    node --test tests/rendered-html.test.mjs
+```powershell
+cd frontend
+npm run lint
+npm run build
+node --test tests/rendered-html.test.mjs
+```
 
-Docker:
+Docker configuration:
 
-    docker compose config
-    docker compose build
-    docker compose up
+```powershell
+docker compose config
+docker compose build
+```
 
-## Moving from the old SQLite version
+## Deployment
 
-The PostgreSQL migration creates a new empty database. Existing messages in
-backend/data/assistant.db are not copied automatically. Keep the SQLite file
-until its data has either been exported or is no longer needed.
+The production system uses:
 
-## Security notes
+- Vercel for the native Next.js frontend in `frontend/`
+- Railway for the Dockerized FastAPI backend in `backend/`
+- Railway PostgreSQL for persistent production data
+- Aerich as the Railway pre-deployment migration command
 
-- Never commit .env or expose GROQ_API_KEY in the frontend.
-- Use a strong PostgreSQL password outside local development.
-- Add authentication and conversation ownership before public deployment.
-- Restrict CORS_ORIGINS to the production frontend domain.
-- Add rate limiting, request-size limits, monitoring, and backups.
+Required production values:
+
+```dotenv
+# Vercel
+NEXT_PUBLIC_API_URL=https://my-assistant-gpt-clone-production.up.railway.app/api
+
+# Railway
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+CORS_ORIGINS=https://ali-raza-assistant-web.vercel.app
+GROQ_MODEL=openai/gpt-oss-120b
+GENERATE_SCHEMAS=false
+```
+
+Keep `GROQ_API_KEY` in Railway's encrypted variables and never place its real
+value in the repository. Railway runs `python -m aerich upgrade` before each
+backend deployment and checks `/api/health` before routing production traffic.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete deployment workflow and
+[BUILD_GUIDE.md](BUILD_GUIDE.md) for the step-by-step architecture guide.
+
+## Current limitations and recommended next steps
+
+- Add authentication and conversation ownership before supporting multiple users.
+- Add rate limiting and request-size limits before advertising the public URL.
+- Configure PostgreSQL backups and production monitoring.
+- Add automated CI checks for backend tests and frontend builds.
+- Merge the deployment pull request and track `main` for long-term production releases.
+
+## License
+
+No license has been added yet. Add one before redistributing the project as an
+open-source package.
