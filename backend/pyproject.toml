@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ali-raza-assistant-api"
+version = "0.1.0"
+description = "FastAPI and LangGraph backend for Ali Raza's Assistant"
+requires-python = ">=3.11"
+dependencies = [
+  "aerich[toml]>=0.9.3,<1.0",
+  "fastapi>=0.116,<1.0",
+  "langchain-core>=1.0,<2.0",
+  "langchain-groq>=1.0,<2.0",
+  "langgraph>=1.0,<2.0",
+  "pydantic-settings>=2.10,<3.0",
+  "python-dotenv>=1.1,<2.0",
+  "tortoise-orm[asyncpg]>=1.1,<2.0",
+  "tzdata>=2025.2",
+  "uvicorn[standard]>=0.35,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28,<1.0",
+  "pytest>=8.4,<9.0",
+  "pytest-asyncio>=1.1,<2.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.aerich]
+tortoise_orm = "app.core.database.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./."
