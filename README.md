@@ -13,6 +13,9 @@ A production-style full-stack chatbot built from basic_chatbot.ipynb.
 Read [BUILD_GUIDE.md](BUILD_GUIDE.md) for the architecture and development
 workflow.
 
+For production deployment with Vercel, Railway, and managed PostgreSQL, read
+[DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Features
 
 - Persistent conversations and messages
