@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from collections.abc import AsyncIterator
 from uuid import uuid4
 
@@ -17,6 +18,7 @@ from app.services.assistant import (
 
 
 router = APIRouter(prefix="/conversations", tags=["chat"])
+logger = logging.getLogger(__name__)
 
 
 def sse(event: str, data: dict) -> str:
@@ -63,6 +65,10 @@ async def stream_assistant_response(
             )
         raise
     except Exception:
+        logger.exception(
+            "Assistant response stream failed for conversation %s",
+            conversation_id,
+        )
         yield sse(
             "error",
             {"message": "The assistant could not complete this response. Try again."},
