@@ -20,6 +20,16 @@ def make_client(tmp_path: Path) -> TestClient:
     return TestClient(create_app(settings))
 
 
+def test_settings_normalize_railway_postgresql_url():
+    settings = Settings(
+        database_url="postgresql://assistant:secret@postgres:5432/assistant"
+    )
+
+    assert settings.database_url == (
+        "postgres://assistant:secret@postgres:5432/assistant"
+    )
+
+
 def test_health_reports_configuration_state(tmp_path: Path):
     with make_client(tmp_path) as client:
         response = client.get("/api/health")
