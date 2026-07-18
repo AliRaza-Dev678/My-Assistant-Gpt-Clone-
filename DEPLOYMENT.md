@@ -1,4 +1,4 @@
-# Deploying Ali Raza's Assistant
+# Deploying RazaMind
 
 The production architecture is:
 
@@ -25,7 +25,7 @@ these variables:
     CORS_ORIGINS=https://your-vercel-domain.vercel.app
     LANGSMITH_TRACING=true
     LANGSMITH_API_KEY=your_real_langsmith_api_key
-    LANGSMITH_PROJECT=ali-raza-assistant
+    LANGSMITH_PROJECT=razamind
     LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 
 If the database service has a different name, replace `Postgres` in the

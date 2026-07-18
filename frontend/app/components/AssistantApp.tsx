@@ -489,7 +489,7 @@ export function AssistantApp() {
               <Sparkles size={18} />
             </span>
             <span className="brand-copy">
-              <strong>Ali Raza&apos;s</strong>
+              <strong>RazaMind</strong>
               <small>Assistant</small>
             </span>
           </button>
@@ -634,7 +634,7 @@ export function AssistantApp() {
               <div className="welcome-mark">
                 <Sparkles size={28} />
               </div>
-              <p className="eyebrow">ALI RAZA&apos;S ASSISTANT</p>
+              <p className="eyebrow">RAZAMIND</p>
               <h1>What can I help you create?</h1>
               <p className="welcome-copy">
                 Think through ideas, learn something difficult, or turn a rough
@@ -675,7 +675,7 @@ export function AssistantApp() {
                   <div className="message-content">
                     <div className="message-author">
                       {message.role === "assistant"
-                        ? "Ali Raza's Assistant"
+                        ? "RazaMind"
                         : "You"}
                     </div>
                     {message.role === "assistant" ? (
@@ -748,7 +748,7 @@ export function AssistantApp() {
                 target.style.height = Math.min(target.scrollHeight, 180) + "px";
               }}
               onKeyDown={handleComposerKeyDown}
-              placeholder="Message Ali Raza's Assistant"
+              placeholder="Message RazaMind"
               rows={1}
               disabled={isStreaming}
               aria-label="Message"

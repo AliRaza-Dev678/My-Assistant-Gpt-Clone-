@@ -43,7 +43,7 @@ def test_health_reports_configuration_state(tmp_path: Path):
     assert response.json()["observability"] == {
         "provider": "langsmith",
         "enabled": False,
-        "project": "ali-raza-assistant",
+        "project": "razamind",
     }
 
 

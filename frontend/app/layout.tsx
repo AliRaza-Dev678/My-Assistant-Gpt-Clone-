@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ali Raza's Assistant",
+  title: "RazaMind",
   description:
-    "A fast, private-by-design AI chat experience powered by LangGraph and Groq.",
+    "An observable AI chat experience powered by LangGraph, Groq, and LangSmith.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

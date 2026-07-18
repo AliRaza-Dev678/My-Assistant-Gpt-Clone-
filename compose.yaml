@@ -1,4 +1,4 @@
-name: ali-raza-assistant
+name: razamind
 
 services:
   db:
@@ -48,7 +48,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
       LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
-      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-ali-raza-assistant}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-razamind}
       LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
     ports:
       - "${BACKEND_PORT:-8000}:8000"

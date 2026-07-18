@@ -5,14 +5,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Ali Raza's Assistant API"
+    app_name: str = "RazaMind API"
     app_env: str = "development"
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
     temperature: float = 0.2
     langsmith_tracing: bool = False
     langsmith_api_key: str = ""
-    langsmith_project: str = "ali-raza-assistant"
+    langsmith_project: str = "razamind"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
     database_url: str = (
         "postgres://assistant:assistant@localhost:5432/ali_raza_assistant"

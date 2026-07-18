@@ -1,11 +1,11 @@
-# Ali Raza's Assistant
+# RazaMind
 
 A full-stack, ChatGPT-style AI assistant built from `basic_chatbot.ipynb` and
 expanded into a production-ready web application.
 
 ## Live application
 
-- Frontend: [ali-raza-assistant-web.vercel.app](https://ali-raza-assistant-web.vercel.app)
+- Frontend: [RazaMind web app](https://ali-raza-assistant-web.vercel.app)
 - Backend health: [Railway API health](https://my-assistant-gpt-clone-production.up.railway.app/api/health)
 - Interactive API docs: [Railway Swagger UI](https://my-assistant-gpt-clone-production.up.railway.app/docs)
 - Source: [GitHub repository](https://github.com/AliRaza-Dev678/My-Assistant-Gpt-Clone-)
@@ -119,7 +119,7 @@ To enable LangSmith locally, also set:
 ```dotenv
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=your_real_langsmith_api_key
-LANGSMITH_PROJECT=ali-raza-assistant
+LANGSMITH_PROJECT=razamind
 ```
 
 If PostgreSQL port `5432` is already occupied, use another host port without
@@ -240,7 +240,7 @@ To use tracing:
    above.
 2. Restart or redeploy the backend and confirm `/api/health` reports
    `observability.enabled: true`.
-3. Send a message, open the `ali-raza-assistant` project in LangSmith, and view
+3. Send a message, open the `razamind` project in LangSmith, and view
    its Threads page.
 4. Search trace metadata by `thread_id`, `thread_label`, `user_id`, or
    `device_label`.
@@ -331,7 +331,7 @@ CORS_ORIGINS=https://ali-raza-assistant-web.vercel.app
 GROQ_MODEL=openai/gpt-oss-120b
 GENERATE_SCHEMAS=false
 LANGSMITH_TRACING=true
-LANGSMITH_PROJECT=ali-raza-assistant
+LANGSMITH_PROJECT=razamind
 ```
 
 Keep `GROQ_API_KEY` and `LANGSMITH_API_KEY` in Railway's encrypted variables and

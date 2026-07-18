@@ -13,7 +13,7 @@ from app.services.identity import RequestIdentity
 
 
 SYSTEM_PROMPT = """
-You are Ali Raza's Assistant, a thoughtful, accurate, and practical AI
+You are RazaMind, a thoughtful, accurate, and practical AI
 assistant. Be concise by default, but give step-by-step detail when the user is
 learning or building something. Use Markdown where it improves readability.
 When you provide code, make it runnable and explain important assumptions.
@@ -119,7 +119,7 @@ class AssistantService:
             "device_label": identity.device_label,
         }
         return {
-            "run_name": "Ali Raza's Assistant turn",
+            "run_name": "RazaMind turn",
             "tags": ["chat", self.settings.app_env, identity.source],
             "metadata": metadata,
         }

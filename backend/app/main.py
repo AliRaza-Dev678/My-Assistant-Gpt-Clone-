@@ -60,7 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         return {
             "status": "ok",
-            "assistant": "Ali Raza's Assistant",
+            "assistant": "RazaMind",
             "model": settings.groq_model,
             "configured": bool(settings.groq_api_key),
             "database": "connected",
