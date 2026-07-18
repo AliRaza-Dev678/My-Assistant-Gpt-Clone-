@@ -14,4 +14,4 @@ def get_assistant(request: Request) -> AssistantService:
 
 
 async def get_request_identity(request: Request) -> RequestIdentity:
-    return await resolve_request_identity(request, request.app.state.settings)
+    return await resolve_request_identity(request)

@@ -14,8 +14,6 @@ class Settings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "ali-raza-assistant"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
-    langsmith_include_user_email: bool = False
-    google_client_id: str = ""
     database_url: str = (
         "postgres://assistant:assistant@localhost:5432/ali_raza_assistant"
     )

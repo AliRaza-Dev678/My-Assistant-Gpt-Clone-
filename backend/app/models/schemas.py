@@ -11,10 +11,9 @@ class MessageCreate(BaseModel):
 class IdentityRead(BaseModel):
     user_id: str
     display_name: str
-    source: Literal["device", "google"]
+    source: Literal["device"]
     device_id: str
     device_label: str
-    email: str | None = None
 
 
 class MessageRead(BaseModel):

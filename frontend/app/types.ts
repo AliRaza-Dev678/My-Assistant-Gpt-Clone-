@@ -23,16 +23,14 @@ export interface ConversationDetail extends ConversationSummary {
 export interface ClientIdentity {
   deviceId: string;
   deviceLabel: string;
-  googleCredential?: string;
 }
 
 export interface IdentityProfile {
   user_id: string;
   display_name: string;
-  source: "device" | "google";
+  source: "device";
   device_id: string;
   device_label: string;
-  email: string | null;
 }
 
 export type StreamEvent =

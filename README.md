@@ -10,9 +10,9 @@ expanded into a production-ready web application.
 - Interactive API docs: [Railway Swagger UI](https://my-assistant-gpt-clone-production.up.railway.app/docs)
 - Source: [GitHub repository](https://github.com/AliRaza-Dev678/My-Assistant-Gpt-Clone-)
 
-> Google sign-in is used only to label observability traces; it is not yet
-> conversation authorization. Conversations are not isolated by user account,
-> so do not enter private or sensitive information in the public deployment.
+> The app does not have user authentication or conversation authorization.
+> Conversations are not isolated by account, so do not enter private or
+> sensitive information in the public deployment.
 
 ## What it includes
 
@@ -27,7 +27,7 @@ expanded into a production-ready web application.
 - Aerich database migrations
 - FastAPI health checks and OpenAPI documentation
 - LangSmith traces grouped into one thread per conversation
-- Optional verified Google identity and anonymous browser-device trace labels
+- Anonymous browser-device labels for identifying trace sources
 - Docker Compose development environment
 - Automated Vercel and Railway deployments from GitHub
 
@@ -40,7 +40,6 @@ expanded into a production-ready web application.
 | AI provider | Groq |
 | Model | `openai/gpt-oss-120b` |
 | Observability | LangSmith traces and conversation threads |
-| Optional identity | Google Identity Services |
 | Database | PostgreSQL 18 |
 | ORM and migrations | Tortoise ORM and Aerich |
 | Local containers | Docker Compose |
@@ -64,8 +63,7 @@ PostgreSQL   Groq API        LangSmith
 
 Vercel serves the frontend. The frontend calls the Railway API, which stores
 conversation data in PostgreSQL and streams model output from Groq. When
-enabled, LangSmith receives model traces; an optional Google ID token is
-verified by the backend before its identity is added to trace metadata.
+enabled, LangSmith receives model traces grouped by application conversation.
 
 ## Project structure
 
@@ -213,10 +211,7 @@ The frontend expects the API at `http://localhost:8000/api` by default.
 | `LANGSMITH_API_KEY` | Backend | Secret LangSmith API key |
 | `LANGSMITH_PROJECT` | Backend | LangSmith project receiving traces |
 | `LANGSMITH_ENDPOINT` | Backend | LangSmith API endpoint |
-| `LANGSMITH_INCLUDE_USER_EMAIL` | Backend | Includes a verified email in trace metadata; defaults to `false` |
-| `GOOGLE_CLIENT_ID` | Backend | OAuth web client ID used to verify Google ID tokens |
 | `NEXT_PUBLIC_API_URL` | Frontend | Public backend base URL ending in `/api` |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Frontend | The same OAuth web client ID; safe to expose publicly |
 | `POSTGRES_*` | Docker Compose | Local PostgreSQL container settings |
 | `BACKEND_PORT` | Docker Compose | Backend host port |
 | `FRONTEND_PORT` | Docker Compose | Frontend host port |
@@ -233,8 +228,6 @@ conversation. Trace metadata also includes:
 - `conversation_id`, `conversation_title`, and a readable `thread_label`
 - `user_id`, `user_display_name`, and `identity_source`
 - `device_id` and the browser-generated `device_label`
-- `user_email` only when Google verified it and
-  `LANGSMITH_INCLUDE_USER_EMAIL=true`
 
 The browser cannot read the computer's real hostname. It creates a random ID
 in local storage and a label such as `Windows - Chrome - ed239a`; clearing site
@@ -254,26 +247,6 @@ To use tracing:
 
 LangSmith receives prompts and model responses when tracing is on. Update your
 privacy notice and retention settings before enabling it for public users.
-
-## Optional Google identity
-
-Google identity requires explicit user sign-in; a website cannot silently read
-the active Gmail account. To enable the sign-in button:
-
-1. In Google Cloud, configure the OAuth consent screen and create an OAuth 2.0
-   **Web application** client ID.
-2. Add `http://localhost:3000` and your Vercel domain as authorized JavaScript
-   origins.
-3. Set that same client ID as `GOOGLE_CLIENT_ID` on the backend and
-   `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on the frontend.
-4. Redeploy both services and use **Continue with Google** in the sidebar.
-
-The frontend sends the short-lived Google ID token to FastAPI. FastAPI verifies
-it, then uses Google's stable `sub` claim as `user_id`. The token itself is
-never added to LangSmith metadata or browser local storage. See Google's
-[web client ID setup](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
-and [server-side ID token verification](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)
-guides.
 
 ## Aerich migration workflow
 
@@ -370,8 +343,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete deployment workflow and
 
 ## Current limitations and recommended next steps
 
-- Add authorization and conversation ownership before supporting multiple users;
-  the current Google identity labels traces but does not isolate stored chats.
+- Add authentication, authorization, and conversation ownership before
+  supporting multiple users; browser trace labels do not isolate stored chats.
 - Add rate limiting and request-size limits before advertising the public URL.
 - Configure PostgreSQL backups and production monitoring.
 - Add automated CI checks for backend tests and frontend builds.

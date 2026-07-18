@@ -10,7 +10,6 @@ requires-python = ">=3.11"
 dependencies = [
   "aerich[toml]>=0.9.3,<1.0",
   "fastapi>=0.116,<1.0",
-  "google-auth[requests]>=2.40,<3.0",
   "langchain-core>=1.0,<2.0",
   "langchain-groq>=1.0,<2.0",
   "langgraph>=1.0,<2.0",

@@ -107,24 +107,17 @@ class AssistantService:
         conversation_title: str,
         identity: RequestIdentity,
     ) -> RunnableConfig:
-        identity_label = identity.display_name
-        if self.settings.langsmith_include_user_email and identity.email:
-            identity_label = identity.email
-
         metadata: dict[str, str] = {
             "thread_id": thread_id,
             "conversation_id": thread_id,
             "conversation_title": conversation_title,
-            "thread_label": f"{identity_label} - {conversation_title}",
+            "thread_label": f"{identity.display_name} - {conversation_title}",
             "user_id": identity.user_id,
             "user_display_name": identity.display_name,
             "identity_source": identity.source,
             "device_id": identity.device_id,
             "device_label": identity.device_label,
         }
-        if self.settings.langsmith_include_user_email and identity.email:
-            metadata["user_email"] = identity.email
-
         return {
             "run_name": "Ali Raza's Assistant turn",
             "tags": ["chat", self.settings.app_env, identity.source],

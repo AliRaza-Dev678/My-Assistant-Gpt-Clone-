@@ -6,7 +6,6 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 
 from app.api.chat import sse
-from app.services import identity as identity_service
 from app.core.config import Settings
 from app.main import create_app
 from app.services.assistant import AssistantService
@@ -46,7 +45,6 @@ def test_health_reports_configuration_state(tmp_path: Path):
         "enabled": False,
         "project": "ali-raza-assistant",
     }
-    assert response.json()["google_sign_in"] is False
 
 
 def test_anonymous_device_identity(tmp_path: Path):
@@ -66,81 +64,30 @@ def test_anonymous_device_identity(tmp_path: Path):
         "source": "device",
         "device_id": "6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
         "device_label": "Windows - Chrome - ed239a",
-        "email": None,
     }
 
 
-def test_google_identity_is_verified_by_the_backend(
-    tmp_path: Path,
-    monkeypatch,
-):
-    monkeypatch.setattr(
-        identity_service,
-        "verify_google_credential",
-        lambda credential, client_id: {
-            "sub": "123456789",
-            "name": "Ali Raza",
-            "email": "ali@example.com",
-            "email_verified": True,
-        },
-    )
-    settings = Settings(
-        app_env="test",
-        database_url="sqlite://" + (tmp_path / "google.db").as_posix(),
-        generate_schemas=True,
-        google_client_id="test-client.apps.googleusercontent.com",
-    )
-
-    with TestClient(create_app(settings)) as client:
-        response = client.get(
-            "/api/identity",
-            headers={
-                "Authorization": "Bearer signed-google-id-token",
-                "X-Device-Id": "6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
-                "X-Device-Label": "Windows - Chrome - ed239a",
-            },
-        )
-
-    assert response.status_code == 200
-    assert response.json()["user_id"] == "google:123456789"
-    assert response.json()["display_name"] == "Ali Raza"
-    assert response.json()["email"] == "ali@example.com"
-
-
-def test_langsmith_thread_metadata_and_email_privacy():
+def test_langsmith_thread_metadata():
     identity = RequestIdentity(
-        user_id="google:123456789",
-        display_name="Ali Raza",
-        source="google",
+        user_id="device:6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
+        display_name="Windows - Chrome - ed239a",
+        source="device",
         device_id="6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
         device_label="Windows - Chrome - ed239a",
-        email="ali@example.com",
     )
-    private_service = AssistantService(Settings())
-    private_config = private_service.build_run_config(
+    service = AssistantService(Settings())
+    config = service.build_run_config(
         thread_id="019b0b6a-5c74-7000-8000-123456789abc",
         conversation_title="Deployment help",
         identity=identity,
     )
 
-    assert private_config["metadata"]["thread_id"] == (
+    assert config["metadata"]["thread_id"] == (
         "019b0b6a-5c74-7000-8000-123456789abc"
     )
-    assert private_config["metadata"]["user_id"] == "google:123456789"
-    assert "user_email" not in private_config["metadata"]
-
-    email_service = AssistantService(
-        Settings(langsmith_include_user_email=True)
-    )
-    email_config = email_service.build_run_config(
-        thread_id="019b0b6a-5c74-7000-8000-123456789abc",
-        conversation_title="Deployment help",
-        identity=identity,
-    )
-
-    assert email_config["metadata"]["user_email"] == "ali@example.com"
-    assert email_config["metadata"]["thread_label"].startswith(
-        "ali@example.com"
+    assert config["metadata"]["user_id"] == identity.user_id
+    assert config["metadata"]["thread_label"].startswith(
+        "Windows - Chrome - ed239a"
     )
 
 

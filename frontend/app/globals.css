@@ -352,7 +352,7 @@ a:focus-visible {
 
 .identity-summary {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  grid-template-columns: 34px minmax(0, 1fr);
   align-items: center;
   gap: 9px;
 }
@@ -390,28 +390,6 @@ a:focus-visible {
   margin-top: 2px;
   color: var(--faint);
   font-size: 10px;
-}
-
-.identity-signout {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border: 0;
-  border-radius: 8px;
-  color: var(--faint);
-  background: transparent;
-}
-
-.identity-signout:hover {
-  color: var(--text);
-  background: var(--sidebar-strong);
-}
-
-.google-sign-in {
-  min-height: 32px;
-  margin-top: 10px;
-  overflow: hidden;
 }
 
 .identity-notice {

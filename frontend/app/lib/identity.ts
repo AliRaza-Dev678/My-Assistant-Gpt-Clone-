@@ -40,19 +40,10 @@ export function configureClientIdentity(identity: ClientIdentity): void {
   currentIdentity = identity;
 }
 
-export function setGoogleCredential(credential: string | null): void {
-  if (!currentIdentity) return;
-  currentIdentity = { ...currentIdentity, googleCredential: credential || undefined };
-}
-
 export function identityHeaders(): Record<string, string> {
   if (!currentIdentity) return {};
-  const headers: Record<string, string> = {
+  return {
     "X-Device-Id": currentIdentity.deviceId,
     "X-Device-Label": currentIdentity.deviceLabel,
   };
-  if (currentIdentity.googleCredential) {
-    headers.Authorization = `Bearer ${currentIdentity.googleCredential}`;
-  }
-  return headers;
 }

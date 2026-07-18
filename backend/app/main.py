@@ -36,7 +36,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.repository = ConversationRepository()
     app.state.assistant = AssistantService(settings)
-    app.state.settings = settings
 
     app.add_middleware(
         CORSMiddleware,
@@ -70,7 +69,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "enabled": settings.langsmith_enabled,
                 "project": settings.langsmith_project,
             },
-            "google_sign_in": bool(settings.google_client_id),
         }
 
     app.include_router(conversations_router, prefix="/api")
