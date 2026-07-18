@@ -23,6 +23,12 @@ these variables:
     APP_ENV=production
     GENERATE_SCHEMAS=false
     CORS_ORIGINS=https://your-vercel-domain.vercel.app
+    LANGSMITH_TRACING=true
+    LANGSMITH_API_KEY=your_real_langsmith_api_key
+    LANGSMITH_PROJECT=ali-raza-assistant
+    LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+    LANGSMITH_INCLUDE_USER_EMAIL=false
+    GOOGLE_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
 
 If the database service has a different name, replace `Postgres` in the
 reference with that service name. Do not paste the database password or Groq
@@ -47,10 +53,16 @@ Import the same GitHub repository in Vercel. Configure:
 Set this environment variable for Production, Preview, and Development:
 
     NEXT_PUBLIC_API_URL=https://your-backend.up.railway.app/api
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
 
 Deploy the project. Copy the assigned production domain, then update the
 Railway backend's `CORS_ORIGINS` variable to that exact origin without a
 trailing slash. Railway will redeploy the backend automatically.
+
+`GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` must contain the same
+Google OAuth web client ID. Add both the local frontend origin and Vercel
+production origin under **Authorized JavaScript origins** in Google Cloud. No
+Google client secret is used by this browser ID-token flow.
 
 ## 3. Production verification
 
@@ -61,6 +73,11 @@ Check all of the following:
 3. Creating a chat returns a streamed assistant response.
 4. Refreshing the page preserves the conversation from PostgreSQL.
 5. Renaming and deleting a conversation work.
+6. `/api/health` reports `observability.enabled: true` after LangSmith is configured.
+7. A sent message appears in the LangSmith project under a thread whose
+   `thread_id` equals the conversation UUID.
+8. Optional Google sign-in changes the sidebar identity and adds a verified
+   `google:<sub>` user ID to new trace metadata.
 
 ## Deployment updates
 

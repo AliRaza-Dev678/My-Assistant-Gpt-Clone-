@@ -1,20 +1,24 @@
 import type {
   ConversationDetail,
   ConversationSummary,
+  IdentityProfile,
   StreamEvent,
 } from "../types";
+import { identityHeaders } from "./identity";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   "http://localhost:8000/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
+  for (const [name, value] of Object.entries(identityHeaders())) {
+    headers.set(name, value);
+  }
   const response = await fetch(API_URL + path, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
@@ -32,6 +36,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T;
   }
   return (await response.json()) as T;
+}
+
+export function getIdentityProfile(): Promise<IdentityProfile> {
+  return request("/identity");
 }
 
 export function listConversations(): Promise<ConversationSummary[]> {
@@ -96,7 +104,7 @@ export async function streamConversation(
     (regenerate ? "/regenerate" : "/messages");
   const response = await fetch(API_URL + path, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...identityHeaders() },
     body: regenerate ? undefined : JSON.stringify({ content }),
     signal,
   });

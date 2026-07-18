@@ -8,6 +8,7 @@ from tortoise.contrib.fastapi import RegisterTortoise
 
 from app.api.chat import router as chat_router
 from app.api.conversations import router as conversations_router
+from app.api.identity import router as identity_router
 from app.core.config import Settings, get_settings
 from app.core.database import build_tortoise_config
 from app.repositories.conversations import ConversationRepository
@@ -35,6 +36,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.repository = ConversationRepository()
     app.state.assistant = AssistantService(settings)
+    app.state.settings = settings
 
     app.add_middleware(
         CORSMiddleware,
@@ -63,10 +65,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "model": settings.groq_model,
             "configured": bool(settings.groq_api_key),
             "database": "connected",
+            "observability": {
+                "provider": "langsmith",
+                "enabled": settings.langsmith_enabled,
+                "project": settings.langsmith_project,
+            },
+            "google_sign_in": bool(settings.google_client_id),
         }
 
     app.include_router(conversations_router, prefix="/api")
     app.include_router(chat_router, prefix="/api")
+    app.include_router(identity_router, prefix="/api")
     return app
 
 

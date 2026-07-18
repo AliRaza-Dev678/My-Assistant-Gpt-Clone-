@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
     temperature: float = 0.2
+    langsmith_tracing: bool = False
+    langsmith_api_key: str = ""
+    langsmith_project: str = "ali-raza-assistant"
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
+    langsmith_include_user_email: bool = False
+    google_client_id: str = ""
     database_url: str = (
         "postgres://assistant:assistant@localhost:5432/ali_raza_assistant"
     )
@@ -36,6 +42,10 @@ class Settings(BaseSettings):
             for origin in self.cors_origins.split(",")
             if origin.strip()
         ]
+
+    @property
+    def langsmith_enabled(self) -> bool:
+        return self.langsmith_tracing and bool(self.langsmith_api_key)
 
 
 @lru_cache

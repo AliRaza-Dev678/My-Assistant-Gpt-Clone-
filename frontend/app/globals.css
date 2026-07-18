@@ -346,12 +346,19 @@ a:focus-visible {
 }
 
 .sidebar-footer {
-  display: grid;
-  grid-template-columns: 34px 1fr 20px;
-  align-items: center;
-  gap: 10px;
   border-top: 1px solid var(--border);
   padding: 13px 5px 1px;
+}
+
+.identity-summary {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 9px;
+}
+
+.identity-copy {
+  min-width: 0;
 }
 
 .profile-avatar {
@@ -373,7 +380,10 @@ a:focus-visible {
 }
 
 .sidebar-footer strong {
+  overflow: hidden;
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-footer small {
@@ -382,8 +392,33 @@ a:focus-visible {
   font-size: 10px;
 }
 
-.sidebar-footer svg {
+.identity-signout {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
   color: var(--faint);
+  background: transparent;
+}
+
+.identity-signout:hover {
+  color: var(--text);
+  background: var(--sidebar-strong);
+}
+
+.google-sign-in {
+  min-height: 32px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.identity-notice {
+  margin: 8px 1px 0;
+  color: var(--faint);
+  font-size: 9px;
+  line-height: 1.4;
 }
 
 .sidebar-restore {

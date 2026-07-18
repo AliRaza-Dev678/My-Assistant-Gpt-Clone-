@@ -4,10 +4,10 @@ import {
   Check,
   ChevronLeft,
   Copy,
+  LogOut,
   Menu,
   MessageSquare,
   Moon,
-  MoreHorizontal,
   PanelLeftClose,
   Pencil,
   Plus,
@@ -35,16 +35,26 @@ import {
   createConversation,
   deleteConversation,
   getConversation,
+  getIdentityProfile,
   listConversations,
   renameConversation,
   streamConversation,
 } from "../lib/api";
+import {
+  configureClientIdentity,
+  getOrCreateDeviceIdentity,
+  setGoogleCredential,
+} from "../lib/identity";
 import type {
   ConversationDetail,
   ConversationSummary,
+  IdentityProfile,
   Message,
   StreamEvent,
 } from "../types";
+import { GoogleIdentityButton } from "./GoogleIdentityButton";
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 const SUGGESTIONS = [
   {
@@ -86,6 +96,9 @@ export function AssistantApp() {
   const [theme, setTheme] = useState<Theme>("system");
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(
+    null,
+  );
   const abortController = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -121,6 +134,22 @@ export function AssistantApp() {
 
   useEffect(() => {
     async function initialLoad() {
+      const deviceIdentity = getOrCreateDeviceIdentity();
+      configureClientIdentity(deviceIdentity);
+      setIdentityProfile({
+        user_id: `device:${deviceIdentity.deviceId}`,
+        display_name: deviceIdentity.deviceLabel,
+        source: "device",
+        device_id: deviceIdentity.deviceId,
+        device_label: deviceIdentity.deviceLabel,
+        email: null,
+      });
+      try {
+        setIdentityProfile(await getIdentityProfile());
+      } catch {
+        // The local browser identity remains available if verification is offline.
+      }
+
       try {
         const items = await listConversations();
         setConversations(items);
@@ -147,6 +176,41 @@ export function AssistantApp() {
   async function refreshSidebar() {
     const items = await listConversations();
     setConversations(items);
+  }
+
+  async function handleGoogleCredential(credential: string) {
+    setGoogleCredential(credential);
+    try {
+      setIdentityProfile(await getIdentityProfile());
+      setError(null);
+    } catch (requestError) {
+      setGoogleCredential(null);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Google sign-in could not be verified.",
+      );
+    }
+  }
+
+  async function signOutGoogle() {
+    window.google?.accounts.id.disableAutoSelect();
+    setGoogleCredential(null);
+    try {
+      setIdentityProfile(await getIdentityProfile());
+    } catch {
+      setIdentityProfile((current) =>
+        current
+          ? {
+              ...current,
+              user_id: `device:${current.device_id}`,
+              display_name: current.device_label,
+              source: "device",
+              email: null,
+            }
+          : current,
+      );
+    }
   }
 
   async function selectConversation(id: string) {
@@ -544,12 +608,43 @@ export function AssistantApp() {
         </div>
 
         <div className="sidebar-footer">
-          <div className="profile-avatar">AR</div>
-          <div>
-            <strong>Ali Raza</strong>
-            <small>Personal workspace</small>
+          <div className="identity-summary">
+            <div className="profile-avatar">
+              {(identityProfile?.display_name || "Anonymous")
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((part) => part[0])
+                .join("")
+                .toUpperCase()}
+            </div>
+            <div className="identity-copy">
+              <strong>{identityProfile?.display_name || "Anonymous browser"}</strong>
+              <small>
+                {identityProfile?.source === "google"
+                  ? identityProfile.email || "Verified Google account"
+                  : "Anonymous device identity"}
+              </small>
+            </div>
+            {identityProfile?.source === "google" && (
+              <button
+                className="identity-signout"
+                onClick={() => void signOutGoogle()}
+                aria-label="Sign out of Google identity"
+                title="Sign out"
+              >
+                <LogOut size={15} />
+              </button>
+            )}
           </div>
-          <MoreHorizontal size={18} />
+          {identityProfile?.source !== "google" && GOOGLE_CLIENT_ID && (
+            <GoogleIdentityButton
+              clientId={GOOGLE_CLIENT_ID}
+              onCredential={(credential) => void handleGoogleCredential(credential)}
+            />
+          )}
+          <p className="identity-notice">
+            This identity labels new LangSmith traces. Google sign-in is optional.
+          </p>
         </div>
       </aside>
 

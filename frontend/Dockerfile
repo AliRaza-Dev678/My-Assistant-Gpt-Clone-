@@ -7,7 +7,9 @@ RUN npm ci --ignore-scripts --no-audit --no-fund
 FROM dependencies AS build
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 
 COPY . .
 RUN npm run build:vinext

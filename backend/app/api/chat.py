@@ -8,13 +8,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 
-from app.api.dependencies import get_assistant, get_repository
+from app.api.dependencies import (
+    get_assistant,
+    get_repository,
+    get_request_identity,
+)
 from app.models.schemas import MessageCreate
 from app.repositories.conversations import ConversationRepository
 from app.services.assistant import (
     AssistantConfigurationError,
     AssistantService,
 )
+from app.services.identity import RequestIdentity
 
 
 router = APIRouter(prefix="/conversations", tags=["chat"])
@@ -30,14 +35,28 @@ async def stream_assistant_response(
     conversation_id: str,
     repository: ConversationRepository,
     assistant: AssistantService,
+    identity: RequestIdentity,
+    conversation_title: str,
 ) -> AsyncIterator[str]:
     assistant_message_id = str(uuid4())
-    yield sse("meta", {"assistant_message_id": assistant_message_id})
+    yield sse(
+        "meta",
+        {
+            "assistant_message_id": assistant_message_id,
+            "thread_id": conversation_id,
+            "identity_label": identity.display_name,
+        },
+    )
     chunks: list[str] = []
 
     try:
         history = await repository.message_history(conversation_id)
-        async for token in assistant.stream_reply(history):
+        async for token in assistant.stream_reply(
+            history,
+            thread_id=conversation_id,
+            conversation_title=conversation_title,
+            identity=identity,
+        ):
             chunks.append(token)
             yield sse("token", {"content": token})
 
@@ -81,8 +100,10 @@ async def create_message(
     payload: MessageCreate,
     repository: ConversationRepository = Depends(get_repository),
     assistant: AssistantService = Depends(get_assistant),
+    identity: RequestIdentity = Depends(get_request_identity),
 ):
-    if await repository.get_conversation(conversation_id) is None:
+    conversation = await repository.get_conversation(conversation_id)
+    if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     content = payload.content.strip()
@@ -91,6 +112,7 @@ async def create_message(
 
     user_message = await repository.add_message(conversation_id, "user", content)
     await repository.auto_title(conversation_id, content)
+    conversation = await repository.get_conversation(conversation_id)
 
     async def event_stream():
         yield sse("user", {"message": user_message})
@@ -98,6 +120,8 @@ async def create_message(
             conversation_id,
             repository,
             assistant,
+            identity,
+            conversation["title"] if conversation else "New chat",
         ):
             yield event
 
@@ -116,6 +140,7 @@ async def regenerate_message(
     conversation_id: str,
     repository: ConversationRepository = Depends(get_repository),
     assistant: AssistantService = Depends(get_assistant),
+    identity: RequestIdentity = Depends(get_request_identity),
 ):
     conversation = await repository.get_conversation(conversation_id)
     if conversation is None:
@@ -129,7 +154,13 @@ async def regenerate_message(
         raise HTTPException(status_code=409, detail="There is no response to regenerate")
 
     return StreamingResponse(
-        stream_assistant_response(conversation_id, repository, assistant),
+        stream_assistant_response(
+            conversation_id,
+            repository,
+            assistant,
+            identity,
+            conversation["title"],
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
