@@ -8,6 +8,8 @@ from fastapi.testclient import TestClient
 from app.api.chat import sse
 from app.core.config import Settings
 from app.main import create_app
+from app.services.assistant import AssistantService
+from app.services.identity import RequestIdentity
 
 
 def make_client(tmp_path: Path) -> TestClient:
@@ -20,6 +22,16 @@ def make_client(tmp_path: Path) -> TestClient:
     return TestClient(create_app(settings))
 
 
+def test_settings_normalize_railway_postgresql_url():
+    settings = Settings(
+        database_url="postgresql://assistant:secret@postgres:5432/assistant"
+    )
+
+    assert settings.database_url == (
+        "postgres://assistant:secret@postgres:5432/assistant"
+    )
+
+
 def test_health_reports_configuration_state(tmp_path: Path):
     with make_client(tmp_path) as client:
         response = client.get("/api/health")
@@ -28,6 +40,55 @@ def test_health_reports_configuration_state(tmp_path: Path):
     assert response.json()["status"] == "ok"
     assert response.json()["configured"] is False
     assert response.json()["database"] == "connected"
+    assert response.json()["observability"] == {
+        "provider": "langsmith",
+        "enabled": False,
+        "project": "razamind",
+    }
+
+
+def test_anonymous_device_identity(tmp_path: Path):
+    with make_client(tmp_path) as client:
+        response = client.get(
+            "/api/identity",
+            headers={
+                "X-Device-Id": "6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
+                "X-Device-Label": "Windows - Chrome - ed239a",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "user_id": "device:6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
+        "display_name": "Windows - Chrome - ed239a",
+        "source": "device",
+        "device_id": "6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
+        "device_label": "Windows - Chrome - ed239a",
+    }
+
+
+def test_langsmith_thread_metadata():
+    identity = RequestIdentity(
+        user_id="device:6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
+        display_name="Windows - Chrome - ed239a",
+        source="device",
+        device_id="6fd3a364-9bf7-4ea9-8803-bd99ed239a44",
+        device_label="Windows - Chrome - ed239a",
+    )
+    service = AssistantService(Settings())
+    config = service.build_run_config(
+        thread_id="019b0b6a-5c74-7000-8000-123456789abc",
+        conversation_title="Deployment help",
+        identity=identity,
+    )
+
+    assert config["metadata"]["thread_id"] == (
+        "019b0b6a-5c74-7000-8000-123456789abc"
+    )
+    assert config["metadata"]["user_id"] == identity.user_id
+    assert config["metadata"]["thread_label"].startswith(
+        "Windows - Chrome - ed239a"
+    )
 
 
 def test_sse_serializes_database_values():

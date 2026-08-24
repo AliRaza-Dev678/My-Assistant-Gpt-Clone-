@@ -1,16 +1,19 @@
+import os
 from collections.abc import AsyncIterator
 from typing import Annotated, TypedDict
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
 from app.core.config import Settings
+from app.services.identity import RequestIdentity
 
 
 SYSTEM_PROMPT = """
-You are Ali Raza's Assistant, a thoughtful, accurate, and practical AI
+You are RazaMind, a thoughtful, accurate, and practical AI
 assistant. Be concise by default, but give step-by-step detail when the user is
 learning or building something. Use Markdown where it improves readability.
 When you provide code, make it runnable and explain important assumptions.
@@ -29,8 +32,18 @@ class AssistantConfigurationError(RuntimeError):
 class AssistantService:
     def __init__(self, settings: Settings):
         self.settings = settings
+        self._configure_langsmith()
         self._model: ChatGroq | None = None
         self._graph = None
+
+    def _configure_langsmith(self) -> None:
+        if not self.settings.langsmith_enabled:
+            os.environ["LANGSMITH_TRACING"] = "false"
+            return
+        os.environ["LANGSMITH_TRACING"] = "true"
+        os.environ["LANGSMITH_API_KEY"] = self.settings.langsmith_api_key
+        os.environ["LANGSMITH_PROJECT"] = self.settings.langsmith_project
+        os.environ["LANGSMITH_ENDPOINT"] = self.settings.langsmith_endpoint
 
     def _get_model(self) -> ChatGroq:
         if not self.settings.groq_api_key:
@@ -87,12 +100,49 @@ class AssistantService:
             return "".join(parts)
         return ""
 
-    async def stream_reply(self, history: list[dict]) -> AsyncIterator[str]:
+    def build_run_config(
+        self,
+        *,
+        thread_id: str,
+        conversation_title: str,
+        identity: RequestIdentity,
+    ) -> RunnableConfig:
+        metadata: dict[str, str] = {
+            "thread_id": thread_id,
+            "conversation_id": thread_id,
+            "conversation_title": conversation_title,
+            "thread_label": f"{identity.display_name} - {conversation_title}",
+            "user_id": identity.user_id,
+            "user_display_name": identity.display_name,
+            "identity_source": identity.source,
+            "device_id": identity.device_id,
+            "device_label": identity.device_label,
+        }
+        return {
+            "run_name": "RazaMind turn",
+            "tags": ["chat", self.settings.app_env, identity.source],
+            "metadata": metadata,
+        }
+
+    async def stream_reply(
+        self,
+        history: list[dict],
+        *,
+        thread_id: str,
+        conversation_title: str,
+        identity: RequestIdentity,
+    ) -> AsyncIterator[str]:
         graph = self._get_graph()
         state = {"messages": self._to_langchain_messages(history)}
+        config = self.build_run_config(
+            thread_id=thread_id,
+            conversation_title=conversation_title,
+            identity=identity,
+        )
 
         async for part in graph.astream(
             state,
+            config=config,
             stream_mode="messages",
             version="v2",
         ):

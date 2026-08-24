@@ -7,7 +7,6 @@ import {
   Menu,
   MessageSquare,
   Moon,
-  MoreHorizontal,
   PanelLeftClose,
   Pencil,
   Plus,
@@ -35,17 +34,22 @@ import {
   createConversation,
   deleteConversation,
   getConversation,
+  getIdentityProfile,
   listConversations,
   renameConversation,
   streamConversation,
 } from "../lib/api";
+import {
+  configureClientIdentity,
+  getOrCreateDeviceIdentity,
+} from "../lib/identity";
 import type {
   ConversationDetail,
   ConversationSummary,
+  IdentityProfile,
   Message,
   StreamEvent,
 } from "../types";
-
 const SUGGESTIONS = [
   {
     title: "Plan a product",
@@ -86,6 +90,9 @@ export function AssistantApp() {
   const [theme, setTheme] = useState<Theme>("system");
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [identityProfile, setIdentityProfile] = useState<IdentityProfile | null>(
+    null,
+  );
   const abortController = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -121,6 +128,21 @@ export function AssistantApp() {
 
   useEffect(() => {
     async function initialLoad() {
+      const deviceIdentity = getOrCreateDeviceIdentity();
+      configureClientIdentity(deviceIdentity);
+      setIdentityProfile({
+        user_id: `device:${deviceIdentity.deviceId}`,
+        display_name: deviceIdentity.deviceLabel,
+        source: "device",
+        device_id: deviceIdentity.deviceId,
+        device_label: deviceIdentity.deviceLabel,
+      });
+      try {
+        setIdentityProfile(await getIdentityProfile());
+      } catch {
+        // The local browser identity remains available if verification is offline.
+      }
+
       try {
         const items = await listConversations();
         setConversations(items);
@@ -129,9 +151,11 @@ export function AssistantApp() {
           setActiveConversationId(detail.id);
           setMessages(detail.messages);
         }
-      } catch {
+      } catch (requestError) {
         setError(
-          "The API is offline. Start the FastAPI service on port 8000, then refresh.",
+          requestError instanceof Error
+            ? requestError.message
+            : "The API is offline. Please check your connection."
         );
       } finally {
         setIsLoading(false);
@@ -467,7 +491,7 @@ export function AssistantApp() {
               <Sparkles size={18} />
             </span>
             <span className="brand-copy">
-              <strong>Ali Raza&apos;s</strong>
+              <strong>RazaMind</strong>
               <small>Assistant</small>
             </span>
           </button>
@@ -544,12 +568,23 @@ export function AssistantApp() {
         </div>
 
         <div className="sidebar-footer">
-          <div className="profile-avatar">AR</div>
-          <div>
-            <strong>Ali Raza</strong>
-            <small>Personal workspace</small>
+          <div className="identity-summary">
+            <div className="profile-avatar">
+              {(identityProfile?.display_name || "Anonymous")
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((part) => part[0])
+                .join("")
+                .toUpperCase()}
+            </div>
+            <div className="identity-copy">
+              <strong>{identityProfile?.display_name || "Anonymous browser"}</strong>
+              <small>Anonymous LangSmith trace label</small>
+            </div>
           </div>
-          <MoreHorizontal size={18} />
+          <p className="identity-notice">
+            This browser label helps identify new LangSmith traces.
+          </p>
         </div>
       </aside>
 
@@ -601,7 +636,7 @@ export function AssistantApp() {
               <div className="welcome-mark">
                 <Sparkles size={28} />
               </div>
-              <p className="eyebrow">ALI RAZA&apos;S ASSISTANT</p>
+              <p className="eyebrow">RAZAMIND</p>
               <h1>What can I help you create?</h1>
               <p className="welcome-copy">
                 Think through ideas, learn something difficult, or turn a rough
@@ -642,7 +677,7 @@ export function AssistantApp() {
                   <div className="message-content">
                     <div className="message-author">
                       {message.role === "assistant"
-                        ? "Ali Raza's Assistant"
+                        ? "RazaMind"
                         : "You"}
                     </div>
                     {message.role === "assistant" ? (
@@ -715,7 +750,7 @@ export function AssistantApp() {
                 target.style.height = Math.min(target.scrollHeight, 180) + "px";
               }}
               onKeyDown={handleComposerKeyDown}
-              placeholder="Message Ali Raza's Assistant"
+              placeholder="Message RazaMind"
               rows={1}
               disabled={isStreaming}
               aria-label="Message"

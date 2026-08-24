@@ -1,4 +1,4 @@
-/** Cloudflare Worker entry point for Ali Raza's Assistant. */
+/** Cloudflare Worker entry point for RazaMind. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 

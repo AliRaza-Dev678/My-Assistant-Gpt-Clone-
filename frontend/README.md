@@ -1,4 +1,4 @@
-# Ali Raza's Assistant frontend
+# RazaMind frontend
 
-The React client for Ali Raza's Assistant. See the project-level README and
+The React client for RazaMind. See the project-level README and
 BUILD_GUIDE for setup, architecture, verification, and deployment steps.

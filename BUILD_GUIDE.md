@@ -1,4 +1,4 @@
-# Build guide: Ali Raza's Assistant
+# Build guide: RazaMind
 
 This guide explains how the notebook evolved into a containerized application
 with PostgreSQL, Tortoise ORM, and Aerich migrations.

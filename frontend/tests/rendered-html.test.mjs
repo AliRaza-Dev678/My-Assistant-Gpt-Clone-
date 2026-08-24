@@ -22,15 +22,15 @@ async function render() {
   );
 }
 
-test("server-renders Ali Raza's Assistant", async () => {
+test("server-renders RazaMind", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Ali Raza&#x27;s Assistant<\/title>/i);
+  assert.match(html, /<title>RazaMind<\/title>/i);
   assert.match(html, /What can I help you create\?/);
   assert.match(html, /New chat/);
-  assert.match(html, /Message Ali Raza/);
+  assert.match(html, /Message RazaMind/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });

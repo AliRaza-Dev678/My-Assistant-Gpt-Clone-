@@ -1,14 +1,17 @@
 {
-  "name": "ali-raza-assistant-frontend",
+  "name": "razamind-frontend",
   "version": "0.1.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
-    "build": "vinext build",
-    "start": "vinext start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "dev:vinext": "vinext dev",
+    "build:vinext": "vinext build",
+    "start:vinext": "vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },

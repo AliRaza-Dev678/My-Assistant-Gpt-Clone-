@@ -8,6 +8,14 @@ class MessageCreate(BaseModel):
     content: str = Field(min_length=1, max_length=20_000)
 
 
+class IdentityRead(BaseModel):
+    user_id: str
+    display_name: str
+    source: Literal["device"]
+    device_id: str
+    device_label: str
+
+
 class MessageRead(BaseModel):
     id: str
     conversation_id: str

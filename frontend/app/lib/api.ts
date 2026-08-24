@@ -1,21 +1,30 @@
 import type {
   ConversationDetail,
   ConversationSummary,
+  IdentityProfile,
   StreamEvent,
 } from "../types";
+import { identityHeaders } from "./identity";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000/api";
+const API_URL = "/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(API_URL + path, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
+  for (const [name, value] of Object.entries(identityHeaders())) {
+    headers.set(name, value);
+  }
+  let response: Response;
+  try {
+    response = await fetch(API_URL + path, {
+      ...init,
+      headers,
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to connect to the API at ${API_URL}. Please ensure the backend is running and CORS is configured.`
+    );
+  }
 
   if (!response.ok) {
     let message = "The request failed.";
@@ -32,6 +41,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T;
   }
   return (await response.json()) as T;
+}
+
+export function getIdentityProfile(): Promise<IdentityProfile> {
+  return request("/identity");
 }
 
 export function listConversations(): Promise<ConversationSummary[]> {
@@ -94,12 +107,22 @@ export async function streamConversation(
     "/conversations/" +
     conversationId +
     (regenerate ? "/regenerate" : "/messages");
-  const response = await fetch(API_URL + path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: regenerate ? undefined : JSON.stringify({ content }),
-    signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(API_URL + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...identityHeaders() },
+      body: regenerate ? undefined : JSON.stringify({ content }),
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    throw new Error(
+      `Failed to connect to the API at ${API_URL}. Please ensure the backend is running and CORS is configured.`
+    );
+  }
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as {

@@ -1,1 +1,1 @@
-"""Ali Raza's Assistant API."""
+"""RazaMind API."""
