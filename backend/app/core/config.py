@@ -14,11 +14,9 @@ class Settings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "razamind"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
-    database_url: str = (
-        "postgres://assistant:assistant@localhost:5432/ali_raza_assistant"
-    )
+    database_url: str = "sqlite://data/assistant.db"
     generate_schemas: bool = False
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = "*"
 
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),

@@ -151,9 +151,11 @@ export function AssistantApp() {
           setActiveConversationId(detail.id);
           setMessages(detail.messages);
         }
-      } catch {
+      } catch (requestError) {
         setError(
-          "The API is offline. Start the FastAPI service on port 8000, then refresh.",
+          requestError instanceof Error
+            ? requestError.message
+            : "The API is offline. Please check your connection."
         );
       } finally {
         setIsLoading(false);

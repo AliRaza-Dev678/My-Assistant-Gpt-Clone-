@@ -8,7 +8,9 @@ import { identityHeaders } from "./identity";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000/api";
+  (process.env.NODE_ENV === "production"
+    ? "https://my-assistant-gpt-clone-production.up.railway.app/api"
+    : "http://localhost:8000/api");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
@@ -16,10 +18,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   for (const [name, value] of Object.entries(identityHeaders())) {
     headers.set(name, value);
   }
-  const response = await fetch(API_URL + path, {
-    ...init,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(API_URL + path, {
+      ...init,
+      headers,
+    });
+  } catch (error) {
+    throw new Error(
+      `Failed to connect to the API at ${API_URL}. Please ensure the backend is running and CORS is configured.`
+    );
+  }
 
   if (!response.ok) {
     let message = "The request failed.";
@@ -102,12 +111,22 @@ export async function streamConversation(
     "/conversations/" +
     conversationId +
     (regenerate ? "/regenerate" : "/messages");
-  const response = await fetch(API_URL + path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...identityHeaders() },
-    body: regenerate ? undefined : JSON.stringify({ content }),
-    signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(API_URL + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...identityHeaders() },
+      body: regenerate ? undefined : JSON.stringify({ content }),
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    throw new Error(
+      `Failed to connect to the API at ${API_URL}. Please ensure the backend is running and CORS is configured.`
+    );
+  }
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as {
