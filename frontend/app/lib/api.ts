@@ -6,11 +6,7 @@ import type {
 } from "../types";
 import { identityHeaders } from "./identity";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  (process.env.NODE_ENV === "production"
-    ? "https://my-assistant-gpt-clone-production.up.railway.app/api"
-    : "http://localhost:8000/api");
+const API_URL = "/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
